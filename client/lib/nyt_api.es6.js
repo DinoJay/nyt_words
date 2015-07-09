@@ -87,7 +87,7 @@ function processSets(globalData, cur_month, year, per_set, page_counter, page_li
               globalData.push({
                 key: final_word,
                 headline: headline_uc,
-                context_words: words,
+                context_words: words.filter((w) => {return w !== final_word; }),
                 doc: doc,
                 type: doc.document_type,
                 type_mat: doc.type_of_material,

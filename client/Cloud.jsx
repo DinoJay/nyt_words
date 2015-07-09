@@ -1,13 +1,13 @@
 Cloud = React.createClass({
   componentDidMount: function() {
-        var el = this.getDOMNode();
-        d3Cloud.create(el, this.getCloudState(), this.props.callback);
+    var el = this.getDOMNode();
+    d3Cloud.create(el, this.getCloudState(), this.props.callback);
   },
 
   componentDidUpdate: function() {
     console.log("state", this.getCloudState());
-        var el = this.getDOMNode();
-        d3Cloud.update(el, this.getCloudState(), this.props.callback);
+    var el = this.getDOMNode();
+    d3Cloud.update(el, this.getCloudState(), this.props.callback);
   },
 
   getCloudState: function() {
@@ -18,8 +18,8 @@ Cloud = React.createClass({
   },
 
   componentWillUnmount: function() {
-        var el = this.getDOMNode();
-        //d3Cloud.destroy(el);
+    var el = this.getDOMNode();
+    //d3Cloud.destroy(el);
   },
 
   render: function() {

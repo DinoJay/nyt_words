@@ -1,3 +1,14 @@
 .Hover {
   cursor: pointer;
 }
+
+path.child-branch {
+  fill: none;
+  stroke-width: 1.5px;
+  stroke-dasharray: 5, 5;
+  stroke-opacity: .5;
+}
+
+.push-down {
+  padding-top: 24px;
+}

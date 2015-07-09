@@ -18,3 +18,4 @@ meteorhacks:npm
 npm-container
 jquery
 grigio:babel
+twbs:bootstrap
