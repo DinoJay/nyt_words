@@ -12,3 +12,74 @@ path.child-branch {
 .push-down {
   padding-top: 24px;
 }
+
+.bc {
+  padding: 8px 15px;
+  margin-bottom: 20px;
+  list-style: none;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+}
+
+.bc > li + li:before {
+  padding: 0 5px;
+  color: #ccc;
+  content: "\003e";
+  font-size: 18px;
+}
+
+.bc > li {
+  display: inline-block;
+}
+
+.bc > li > a {
+  font-size: 18px;
+  /* color: darkred; */
+}
+
+/* .myTable { */
+/*   height: 300px; */
+/*   overflow: auto; */
+/*   overflow-x: hidden; */
+/* } */
+
+table {
+  width: 100%;
+}
+
+thead, tbody, tr, td, th { display: block; }
+
+tr:after {
+  content: ' ';
+  display: block;
+  visibility: hidden;
+  clear: both;
+}
+
+thead th {
+  height: 30px;
+
+  /*text-align: left; */
+}
+
+tbody {
+  height: 300px;
+  overflow-y: auto;
+}
+
+tbody td, thead th {
+  /* width: 33.2%; */
+  float: left;
+}
+
+.name-cell{
+  width: 50%;
+}
+
+.date-cell{
+  width: 25%;
+}
+
+.keywords-cell{
+  width: 25%;
+}

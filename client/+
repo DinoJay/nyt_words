@@ -1,14 +1,11 @@
 d3Cloud = {};
 
-var width = 1100;
-var height = 600;
-var margin = {left: 100, right: 100, top: 100, bottom: 100};
-
 var color = d3.scale.linear()
   .domain([10, 15, 20, 25, 30, 40, 50, 55, 60, 80, 90, 95, 97, 98, 99, 150])
-  .range((['#041d4c', '#041d4c', '#041d4c', '#041d4c', '#041d4c', '#003269',
-          '#003269', '#003269', '#003269', '#31669e', '#041d4c', '#041d4c',
-          '#31659d', '#38507e', '#979696', '#939393']));
+  .range(['#041d4c', '#041d4c', '#041d4c', '#041d4c', '#041d4c', '#003269',
+    '#003269', '#003269', '#003269', '#31669e', '#041d4c',
+    '#041d4c', '#31659d', '#38507e', '#979696', '#939393'
+  ]);
 
 var color2 = d3.scale.linear()
   .domain([10, 15, 20, 25, 30, 40, 50, 55, 60, 80, 90, 95, 97, 98, 99, 150])
@@ -19,7 +16,6 @@ var color2 = d3.scale.linear()
          '#c0223b', '#b81b34', '#b0122c', '#a70b24', '#9e051b', '#94010f',
          '#8b0000'].reverse());
 
-
 function linkArc(d) {
   var dx = d.target.x - d.source.x;
   var dy = d.target.y - d.source.y;
@@ -29,8 +25,9 @@ function linkArc(d) {
     ' 0 0,1 ' + d.target.x + ',' + d.target.y);
 }
 
-function update_word_links(selection, word_obj, history, that, i) {
+function update_word_links(selection, word_obj, that, i) {
 
+  // console.log("update background selection", selection);
   var bboxStart = that.getBBox();
   // TODO: find better
   var xRectStart = word_obj.x - bboxStart.width / 2;
@@ -61,7 +58,7 @@ function update_word_links(selection, word_obj, history, that, i) {
         target: d
       });
 
-      if (history.indexOf(d.key) === -1) {
+      if (!d.clicked) {
         var bboxEnd = this.getBBox();
         // TODO: find better
         var xRectEnd = d.x - bboxEnd.width / 2;
@@ -96,6 +93,7 @@ function update_word_links(selection, word_obj, history, that, i) {
           return 0.3;
         else return 1;
       });
+
     }
   });
 
@@ -123,19 +121,17 @@ function update_word_links(selection, word_obj, history, that, i) {
     .attr('d', linkArc);
 }
 
-function remove_word_links(history) {
-  d3.select("g").selectAll("g rect").filter((d) => {
-    return history.indexOf(d.key) === -1;
+function remove_word_links() {
+  d3.select("g").selectAll("rect").filter((d) => {
+    return !d.clicked;
   }).remove();
-
-  // d3.select("g").selectAll("rect").remove();
 
   d3.selectAll("g text").style("fill", (d, i) => {
     return d.clicked ? color2(i) : color(i);
   });
 
   d3.selectAll("g text").style("fill", (d, i) => {
-    if(history.indexOf(d.key) !== -1)
+    if(d.clicked)
       return "white";
     else
       return color(i);
@@ -163,44 +159,41 @@ function reset_background() {
   });
 }
 
-function post_process_background(d, i, history, that) {
-    if (history.indexOf(d.key) !== -1) {
-      var bbox = that.getBBox();
-      // TODO: find better
-      var xRect = d.x - bbox.width / 2;
-      var yRect = d.y - bbox.height * 6 / 8;
+function post_process_background(d, i) {
+  if (d.clicked) {
+    var bbox = this.getBBox();
+    // TODO: find better
+    var xRect = d.x - bbox.width / 2;
+    var yRect = d.y - bbox.height * 6 / 8;
 
-      d3.select("g").insert("rect", ":first-child")
-        .datum(d)
-        .attr("rx", 7)
-        .attr("ry", 7)
-        .attr("transform", "translate(" + [xRect, yRect] + ")")
-        .attr("width", bbox.width)
-        .attr("height", bbox.height)
-        .style("fill", color2(i))
-        .style("opacity", 0.3);
+    d3.select("g").insert("rect", ":first-child")
+      .datum(d)
+      .attr("rx", 7)
+      .attr("ry", 7)
+      .attr("transform", "translate(" + [xRect, yRect] + ")")
+      .attr("width", bbox.width)
+      .attr("height", bbox.height)
+      .style("fill", color2(i))
+      .style("opacity", 0.3);
 
-      d3.select(that).style("fill", "white");
-
-    } else
-      d.clicked = false;
+    d3.select(this).style("fill", "white");
+  }
 }
-
 
 d3Cloud.create = function(el, state, callback) {
   //TODO: props to include as arg
   d3.select(el).append("svg")
     .attr("id", "word-cloud")
-    .attr("width", width)
-    .attr("height", height)
+    .attr("width", '1100')
+    .attr("height", '500')
     .append("g")
-    .attr("transform", "translate(545,300)");
+    .attr("transform", "translate(545,260)");
 
   this.update(el, state, callback);
 };
 
 d3Cloud.update = function(el, state, callback) {
-  d3.layout.cloud().size([width, height])
+  d3.layout.cloud().size([1100, 500])
     .words(state.data)
     .padding(4)
     // .random((d) => {return 1; } )
@@ -214,14 +207,13 @@ d3Cloud.update = function(el, state, callback) {
       return d.size;
     })
     .on("end", (d) => {
-      this.draw(d, state, callback);
+      this.draw(d, callback);
     })
     .start();
 
 };
 
-d3Cloud.draw = function(words, state, callback) {
-  d3.selectAll("rect").remove();
+d3Cloud.draw = function(words, callback) {
 
   var cloud = d3.select("g").selectAll("g text")
     .data(words, (d) => {
@@ -238,23 +230,20 @@ d3Cloud.draw = function(words, state, callback) {
     .attr('class', 'Word')
     .text(d => {
       return d.key;
+    })
+    .on("click", function(d, i) {
+      d3.selectAll("rect").remove();
+      d.clicked = !d.clicked;
+      callback(d);
+    })
+    .on("mouseover", function(d, i) {
+      if (!d.clicked) {
+        update_word_links(d3.selectAll("g text"), d, this, i);
+      }
+    })
+    .on("mouseout", function(d, i) {
+      remove_word_links();
     });
-
-    d3.selectAll("text")
-      .on("click", function(d, i) {
-        d.clicked = !d.clicked;
-
-        callback(d);
-      })
-      .on("mouseover", function(d, i) {
-        if (!d.clicked) {
-          update_word_links(d3.selectAll("g text"), d, state.history, this, i);
-        }
-        console.log("mouseover", d);
-      })
-      .on("mouseout", function(d, i) {
-        remove_word_links(state.history);
-      });
 
   //Entering and existing words
   cloud
@@ -272,19 +261,14 @@ d3Cloud.draw = function(words, state, callback) {
       return ("translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")");
     })
     .style("fill-opacity", 1)
-    .each("end", function(d, i) {
-      post_process_background(d, i, state.history, this);
-    });
+    .each("end", function(d, i) { post_process_background(d, i); });
 
   d3.selectAll("g path").remove();
 
   //Exiting words
   cloud.exit()
-    .on("mouseout", null)
-    .on("mouseover", null)
-    .on("click", null)
     .transition()
-    .duration(1000)
+    .duration(200)
     .style('fill-opacity', 1e-6)
     .attr('font-size', 1)
     .remove();

@@ -1,13 +1,9 @@
-var id = 0;
-// number of api requests to make
-var page_limit = 10;
-
 var scale = d3.scale.linear()
   .domain([1, 30, 60])
   .range([10, 79])
   .clamp(true);
 
-var fontSize = d3.scale.log().range([15, 100]);
+var fontSize = d3.scale.linear().domain([1, 60]).range([8, 60]);
 var fill = d3.scale.category20();
 
 Array.prototype.last = function() {
@@ -16,12 +12,14 @@ Array.prototype.last = function() {
 
 // d3
 function myScale(data, count, incr) {
-  var size;
-  if (data.length < 1000) size = scale(count) + incr + 5;
-  else {
-    size = scale(count);
-  }
-  return size;
+  var size = scale(count) + incr + 5;
+
+    // if (data.length < 500)
+    //   size = fontSize(count);
+
+  return fontSize(count);
+  // return count;
+
 }
 
 function nest_data(data, limit, clicked_words, incr) {
@@ -30,6 +28,8 @@ function nest_data(data, limit, clicked_words, incr) {
       return d.key;
     })
     .entries(data, d3.map);
+
+  console.log("nested data", nested_data);
 
   var context_data = nested_data.map((d) => {
     d.context_words = [];
@@ -62,7 +62,7 @@ function nest_data(data, limit, clicked_words, incr) {
     if (clicked_words.indexOf(d.key) !== -1) {
       console.log("pass");
       d.clicked = true;
-      d.size = myScale(data, d.values.length, incr) + 40;
+      d.size = myScale(data, d.values.length, 0);
     }
     return d;
   });
@@ -80,40 +80,20 @@ var App = ReactMeteor.createClass({
 
   getInitialState: function() {
     return {
-      cloud_data: [
-        []
-      ]
+      cloud_data: [[]],
+      history: [],
+      articles: [[]]
     };
   },
 
   getDefaultProps: function() {
     return {
-      pageLimit: 10,
+      pageLimit: 1000,
+      wordLimit: 5000,
       year: 2015,
-      month: 4,
+      month: 6,
       newsDesk: "National"
     };
-  },
-
-  grid_data: function(data) {
-    console.log("Flat Data");
-    console.log(data);
-    var grid_data = d3.nest().key(function(d) {
-        return d.headline;
-      })
-      .entries(data, d3.map);
-
-    grid_data.forEach(function(d) {
-      console.log("single WORD:" + d);
-      d.article = d.key;
-      d.id = id++;
-      d.date = d.values[0].pub_date.substring(0,
-        d.values[0].pub_date.indexOf('T'));
-      // web url
-      d.web_url = d.values[0].web_url;
-    });
-    return grid_data;
-
   },
 
   loadCloud: function(interval) {
@@ -146,24 +126,39 @@ var App = ReactMeteor.createClass({
     return t;
   },
 
-  componentDidMount: function() {
-    var t = this.loadCloud(1000);
+  fetchData: function(year, month, newsDesk, timer) {
 
-    nyt_fetch_data(this.props.year, this.props.month, this.props.pageLimit,
-      this.props.newsDesk, (articles) => {
-        console.log("articles", articles, "Length", articles.length);
+    nyt_fetch_data(year, month, newsDesk, this.props.pageLimit, (articles) => {
+      console.log("all articles", articles, "Length", articles.length);
 
-        var nestedData = nest_data(articles, 1000, [], 0);
-        console.log("nest_data", nestedData);
-        clearInterval(t);
+      var nestedData = nest_data(articles, this.props.wordLimit, [], 0);
+      console.log("nest_data", nestedData);
+      clearInterval(timer);
 
-        this.setState({
-          cloud_data: [nestedData]
-        });
+      var titles = articles.map((a) => {return a.headline; });
+      console.log("titles", titles);
+      var uniqArticles = articles.filter((a, i) => {
+        return titles.indexOf(a.headline) === i;
       });
+
+      this.setState((prevState) => {
+        return {
+          cloud_data: [nestedData],
+          articles: [uniqArticles]
+        };
+      });
+    });
+  },
+
+  componentDidMount: function() {
+    var timer = this.loadCloud(1000);
+
+    this.fetchData(this.props.year, this.props.month, this.props.newsDesk,
+      timer);
   },
 
   componentDidUpdate: function(prevProps, prevState) {
+    // TODO
     if (this.state.year !== prevState.year ||
       this.state.month !== prevState.month ||
       this.state.newsDesk !== prevState.newsDesk) {
@@ -173,25 +168,15 @@ var App = ReactMeteor.createClass({
   },
 
   word_click_handler: function(d) {
-
-    console.log("fishing datum", d);
-    if (!d.clicked) {
-      this.setState(function(previousState, currentProps) {
-        previousState.cloud_data.pop();
-        return {
-          cloud_data: previousState.cloud_data
-        };
-      });
-      return;
-    } else {
-
+    if (d.clicked) {
+      console.log("clicked word", d);
       console.log("cloud data", this.state.cloud_data);
       var cur_cloud_data = this.state.cloud_data.last();
 
-      // filter word objects
-      var context_cloud_data = d.context_words.map((str) => {
+      // get all associated words to word d
+      var context_cloud_data = d.context_words.map((key) => {
         return cur_cloud_data.find((word_obj) => {
-          return (word_obj.key === str);
+          return (word_obj.key === key);
         });
       }).filter((word_obj) => {
         return word_obj;
@@ -199,57 +184,90 @@ var App = ReactMeteor.createClass({
 
       var cloud_data = context_cloud_data.concat([d]);
 
-      this.setState(function(previousState, currentProps) {
-        var newCloudDataStack = previousState.cloud_data.concat([cloud_data]);
+      // TODO:
+      // var cloud_data = context_cloud_data;
+      // cloud_data.forEach((e) => {
+      //   e.size = myScale(cloud_data, e.values.length, 40);
+      // });
+
+      this.setState(function(prevState) {
+        return {
+          cloud_data: prevState.cloud_data.concat([cloud_data]),
+          history: prevState.history.concat([d.key]),
+          articles: prevState.articles.concat([d.values])
+        };
+      });
+    } else {
+
+      this.setState(function(prevState, currentProps) {
+
+        var prev_data_index = prevState.history.indexOf(d.key);
+        console.log("prev data index", prev_data_index);
+        var old_cloud_data = prevState.cloud_data.slice(0,
+                                                        prev_data_index + 1);
+        var old_history = prevState.history.slice(0, prev_data_index);
+
+        var old_articles = prevState.articles.slice(0, prev_data_index + 1);
 
         return {
-          cloud_data: newCloudDataStack
+          cloud_data: old_cloud_data,
+          history: old_history,
+          articles: old_articles
         };
       });
     }
-
   },
 
   formChangeHandler: function(formState) {
     console.log("formState", formState);
-    var t = this.loadCloud(1000);
+    var timer = this.loadCloud(1000);
+    this.fetchData(formState.year, formState.month, formState.newsDesk, timer);
+  },
 
-    nyt_fetch_data(formState.year, formState.month, formState.pageLimit,
-      formState.newsDesk, (articles) => {
-        console.log("articles", articles, "Length", articles.length);
+  bcClickHandler: function(key) {
+    console.log("click", key);
+    this.setState(function(prevState, currentProps) {
 
-        var nestedData = nest_data(articles, 1000, [], 0);
-        console.log("nest_data", nestedData);
-        clearInterval(t);
+      var prev_data_index = prevState.history.indexOf(key);
 
-        this.setState({
-          cloud_data: [nestedData]
-        });
-      }
-    );
+      var old_cloud_data = prevState.cloud_data.slice(0, prev_data_index + 1);
+      var old_history = prevState.history.slice(0, prev_data_index);
+
+      d3.selectAll("rect").remove();
+
+      return {
+        cloud_data: old_cloud_data,
+        history: old_history
+      };
+    });
   },
 
   render: function() {
+    console.log("this.state.cloud_data", this.state.cloud_data);
+    console.log("history", this.state.history);
+    console.log("articles", this.state.articles.last());
     return (
       <div className="container">
-      <div className="col-md-12">
-        <MyForm year={this.props.year} month={this.props.month}
-          newsDesk={this.props.newsDesk}
-          changeHandler={this.formChangeHandler}/>
-      </div>
         <div className="col-md-12">
-          Placeholder, Placeholder, Placeholder, Placeholder, Placeholder
+          <MyForm year={this.props.year} month={this.props.month}
+            newsDesk={this.props.newsDesk}
+            changeHandler={this.formChangeHandler}/>
+        </div>
+        <div className="col-md-12">
+          <Breadcrumbs history={this.state.history}
+            clickHandler={this.bcClickHandler}/>
         </div>
 
         <div className="col-md-12">
           <Cloud data={this.state.cloud_data.last()}
+            history={this.state.history}
             callback={this.word_click_handler}/>
         </div>
 
         <div className="col-md-12">
+          <ArticleTable data={this.state.articles.last()}/>
         </div>
       </div>
     );
   }
 });
-

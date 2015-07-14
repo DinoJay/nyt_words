@@ -442,6 +442,7 @@ stop_word_removal = function(str) {
     ':'
   ];
 
+stop_words = [];
 // Split out all the individual words in the phrase
 words = cleansed_string.match(/[^\s]+|\s+[^\s+]$/g);
 

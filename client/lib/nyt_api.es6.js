@@ -18,6 +18,7 @@ var stoplist = ["the", "for", "in", "year", "years", "but", "of", "new",
   "oct.", "calls", "charged", "his", "charged", "deal",
   "report", "finally", "posts", "hong", "behind", "evening"
 ];
+// stoplist = [];
 
 
 function fetchForMonth(year, month, page, totalDone, desk, api_key) {
@@ -41,7 +42,6 @@ function fetchForMonth(year, month, page, totalDone, desk, api_key) {
     },
     function(data, status) {
       totalDone++;
-      console.log("result", result);
       return data;
     }, "JSON");
 
@@ -77,17 +77,18 @@ function processSets(globalData, cur_month, year, per_set, page_counter, page_li
           // TODO: trim words
           var words = hdln_no_stop_words.match(/\S+/g);
           if (!words) words = [];
-          words.forEach(function(word) {
+          doc.keywords.forEach(function(word) {
 
             var stripped_word = $("<div/>").html(word).text();
             var final_word = stripped_word.replace(/[^’a-zA-Z ]/g, "");
+            final_word = word.value;
 
             if (stoplist.indexOf(final_word) === -1) {
 
               globalData.push({
                 key: final_word,
                 headline: headline_uc,
-                context_words: words.filter((w) => {return w !== final_word; }),
+                context_words: doc.keywords.filter((w) => {return ( w.value !== final_word && w.name === "subject"); }).map((w) => {return w.value; }),
                 doc: doc,
                 type: doc.document_type,
                 type_mat: doc.type_of_material,
@@ -116,7 +117,7 @@ function processSets(globalData, cur_month, year, per_set, page_counter, page_li
 }
 
 
-nyt_fetch_data = function(year, cur_month, page_limit, desk, callback) {
+nyt_fetch_data = function(year, cur_month, desk, page_limit, callback) {
   //used to get progress (not done yet)
   var searchTerm = "";
   var per_set = 10;
@@ -124,7 +125,7 @@ nyt_fetch_data = function(year, cur_month, page_limit, desk, callback) {
   var totalDone = 0;
   // global data used for processSets
   var globalData = [];
-  var api_key = "1ca882140f11fee967a0d3a79b348f93:6:69878891";
+  var api_key = "120b4b17dae90dd971d043bd54a1d3f2:18:69878891";
 
   //$progress.text("Beginning work...");
   return processSets(globalData, cur_month, year, per_set, page_counter,
