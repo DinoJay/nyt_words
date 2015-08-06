@@ -7,16 +7,13 @@
 meteor-platform
 autopublish
 insecure
-mquandalle:bower
-reactjs:react
 dsyko:d3-cloud
 d3js:d3
 cosmos:browserify
-meteorhacks:npm
 
 
-npm-container
 jquery
-grigio:babel
 twbs:bootstrap
 momentjs:moment
+universe:modules
+react

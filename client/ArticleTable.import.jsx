@@ -1,4 +1,4 @@
-ArticleTable = ReactMeteor.createClass({
+var ArticleTable = React.createClass({
 
   // getInitialState: function() {
   //   return {
@@ -45,7 +45,7 @@ ArticleTable = ReactMeteor.createClass({
   }
 });
 
-var Article = ReactMeteor.createClass({
+var Article = React.createClass({
 
   getDefaultProps: function() {
     return {
@@ -73,3 +73,5 @@ var Article = ReactMeteor.createClass({
     );
   }
 });
+
+export default ArticleTable;

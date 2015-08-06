@@ -1,4 +1,4 @@
-Breadcrumbs = ReactMeteor.createClass({
+var Breadcrumbs = React.createClass({
 
   getDefaultProps: function() {
     return {
@@ -38,7 +38,7 @@ Breadcrumbs = ReactMeteor.createClass({
 });
 
 
-Crumb = ReactMeteor.createClass({
+var Crumb = React.createClass({
 
   getDefaultProps: function() {
     return {
@@ -68,3 +68,5 @@ Crumb = ReactMeteor.createClass({
     );
   }
 });
+
+export default Breadcrumbs;

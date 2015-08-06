@@ -1,4 +1,4 @@
-MyForm = ReactMeteor.createClass({
+var MyForm = React.createClass({
 
   getDefaultProps: function() {
     return {
@@ -81,8 +81,7 @@ MyForm = ReactMeteor.createClass({
                 <div className="form-group col-lg-3 col-md-3 push-down">
                   <button type="submit"
                     className="form-control btn btn-primary buttonSearch"
-                    bsStyle='primary'
-                    >
+                    bsStyle='primary'>
                     Get it on! <i className="glyphicon glyphicon-ok"></i>
                   </button>
                 </div>
@@ -92,3 +91,5 @@ MyForm = ReactMeteor.createClass({
       );
     }
 });
+
+export default MyForm;

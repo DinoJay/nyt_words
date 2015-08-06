@@ -1,82 +1,16 @@
-var scale = d3.scale.linear()
-  .domain([1, 30, 60])
-  .range([10, 79])
-  .clamp(true);
+import Cloud from './Cloud';
+import MyForm from './myForm';
+import Breadcrumbs from './Breadcrumbs';
+import ArticleTable from './ArticleTable';
+import nyt_fetch_data from './lib/nyt_api'
 
-var fontSize = d3.scale.linear().domain([1, 60]).range([8, 60]);
 var fill = d3.scale.category20();
 
 Array.prototype.last = function() {
   return this[this.length - 1];
 };
 
-// d3
-function myScale(data, count, incr) {
-  var size = scale(count) + incr + 5;
-
-    // if (data.length < 500)
-    //   size = fontSize(count);
-
-  return fontSize(count);
-  // return count;
-
-}
-
-function nest_data(data, limit, clicked_words, incr) {
-
-  var nested_data = d3.nest().key((d) => {
-      return d.key;
-    })
-    .entries(data, d3.map);
-
-  console.log("nested data", nested_data);
-
-  var context_data = nested_data.map((d) => {
-    d.context_words = [];
-
-    d.values.forEach((e) => {
-      d.context_words = d.context_words.concat(e.context_words.filter((w) => {
-        if (d.context_words.indexOf(w) === -1)
-          return w;
-      }));
-    });
-    return d;
-  });
-
-  console.log("context data", context_data);
-  var selected_data = nested_data.filter(d => {
-    if (d.values.length > 0)
-      return d;
-  });
-
-  console.log("selected_data");
-  console.log(selected_data);
-
-  var augmented_data = selected_data.map(function(d, i) {
-    d.count = d.values.length;
-    // d.size = fontSize(d.count);
-    d.size = myScale(data, d.values.length, incr);
-    d.clicked = false;
-    d.color = fill(i);
-
-    if (clicked_words.indexOf(d.key) !== -1) {
-      console.log("pass");
-      d.clicked = true;
-      d.size = myScale(data, d.values.length, 0);
-    }
-    return d;
-  });
-
-  var sortedData = augmented_data.sort(function(a, b) {
-    return b.count - a.count;
-  });
-
-  return sortedData.slice(0, limit);
-
-}
-
-var App = ReactMeteor.createClass({
-  templateName: "App",
+var App = React.createClass({
 
   getInitialState: function() {
     return {
@@ -88,8 +22,7 @@ var App = ReactMeteor.createClass({
 
   getDefaultProps: function() {
     return {
-      pageLimit: 1000,
-      wordLimit: 5000,
+      pageLimit: 5000,
       year: 2015,
       month: 6,
       newsDesk: "National"
@@ -100,7 +33,6 @@ var App = ReactMeteor.createClass({
     var counter = 0;
     var init_data = [];
     var t = setInterval(() => {
-
       if (counter / 1000 <= 20) init_data = ["Please", "Wait!"];
       else if (counter / 1000 <= 40) init_data = ["It", "Takes", "Time..."];
       else if (counter / 1000 <= 80) init_data = ["Don't", "Worry!"];
@@ -128,23 +60,16 @@ var App = ReactMeteor.createClass({
 
   fetchData: function(year, month, newsDesk, timer) {
 
-    nyt_fetch_data(year, month, newsDesk, this.props.pageLimit, (articles) => {
-      console.log("all articles", articles, "Length", articles.length);
-
-      var nestedData = nest_data(articles, this.props.wordLimit, [], 0);
-      console.log("nest_data", nestedData);
+    nyt_fetch_data(year, month, newsDesk, this.props.pageLimit,
+                   (articles, words) => {
+      // console.log("all articles", articles, "Length", articles.length);
+      // console.log("words", words);
       clearInterval(timer);
-
-      var titles = articles.map((a) => {return a.headline; });
-      console.log("titles", titles);
-      var uniqArticles = articles.filter((a, i) => {
-        return titles.indexOf(a.headline) === i;
-      });
 
       this.setState((prevState) => {
         return {
-          cloud_data: [nestedData],
-          articles: [uniqArticles]
+          cloud_data: [words],
+          articles: [articles]
         };
       });
     });
@@ -271,3 +196,5 @@ var App = ReactMeteor.createClass({
     );
   }
 });
+
+export default App;

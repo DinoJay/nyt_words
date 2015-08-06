@@ -1,4 +1,6 @@
-Cloud = React.createClass({
+import d3Cloud from './d3Cloud';
+
+var Cloud = React.createClass({
   getDefaultProps: function() {
     return {
       data: [],
@@ -28,3 +30,4 @@ Cloud = React.createClass({
     );
   }
 });
+export default Cloud;

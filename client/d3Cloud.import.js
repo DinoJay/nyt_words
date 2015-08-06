@@ -1,4 +1,4 @@
-d3Cloud = {};
+var d3Cloud = {};
 
 var width = 1100;
 var height = 600;
@@ -36,7 +36,7 @@ function update_word_links(selection, word_obj, history, that, i) {
   var xRectStart = word_obj.x - bboxStart.width / 2;
   var yRectStart = word_obj.y - bboxStart.height * 6 / 8;
 
-  d3.select("g")
+  d3.select("#word-cloud g")
     .insert("g", ":first-child")
     .insert("rect")
     .datum(word_obj)
@@ -67,13 +67,15 @@ function update_word_links(selection, word_obj, history, that, i) {
         var xRectEnd = d.x - bboxEnd.width / 2;
         var yRectEnd = d.y - bboxEnd.height * 6 / 8;
 
-        d3.select("g")
+        d3.select("#word-cloud g")
           .insert("g", ":first-child")
           .append("rect")
           .datum(d)
           .attr("rx", 7)
           .attr("ry", 7)
-          .attr("transform", "translate(" + [xRectStart, yRectStart] + ")")
+          .attr("transform", "translate("
+                + [xRectStart, yRectStart]
+                + ")")
           .attr("width", bboxStart.width)
           .attr("height", bboxStart.height)
           .style("fill", color2(j))
@@ -99,7 +101,7 @@ function update_word_links(selection, word_obj, history, that, i) {
     }
   });
 
-  var paths = d3.select("g g").selectAll('path')
+  var paths = d3.select("#word-cloud g g").selectAll('path')
     .data(links, function(d) {
       return d.source.key + "-" + d.target.key;
     });
@@ -124,38 +126,38 @@ function update_word_links(selection, word_obj, history, that, i) {
 }
 
 function remove_word_links(history) {
-  d3.select("g").selectAll("g rect").filter((d) => {
+  d3.select("#word-cloud g").selectAll("g rect").filter((d) => {
     return history.indexOf(d.key) === -1;
   }).remove();
 
   // d3.select("g").selectAll("rect").remove();
 
-  d3.selectAll("g text").style("fill", (d, i) => {
+  d3.selectAll("#word-cloud g text").style("fill", (d, i) => {
     return d.clicked ? color2(i) : color(i);
   });
 
-  d3.selectAll("g text").style("fill", (d, i) => {
+  d3.selectAll("#word-cloud g text").style("fill", (d, i) => {
     if(history.indexOf(d.key) !== -1)
       return "white";
     else
       return color(i);
   });
 
-  d3.selectAll("g rect").style("opacity", (d, i) => {
+  d3.selectAll("#word-cloud g rect").style("opacity", (d, i) => {
     return d.clicked ? 0.5 : 1;
   });
 
-  d3.selectAll("g text").style("opacity", 1);
+  d3.selectAll("#word-cloud g text").style("opacity", 1);
 
-  d3.selectAll("g path").remove();
+  d3.selectAll("#word-cloud g path").remove();
 
 }
 
 function reset_background() {
-  d3.select("g").selectAll("rect").filter((d) => {
+  d3.select("#word-cloud g").selectAll("rect").filter((d) => {
     return !d.clicked;
   }).remove();
-  d3.selectAll("g text").style("fill", (d, j) => {
+  d3.selectAll("#word-cloud g text").style("fill", (d, j) => {
     if(d.clicked)
       return "white";
     else
@@ -170,7 +172,7 @@ function post_process_background(d, i, history, that) {
       var xRect = d.x - bbox.width / 2;
       var yRect = d.y - bbox.height * 6 / 8;
 
-      d3.select("g").insert("rect", ":first-child")
+      d3.select("#word-cloud g").insert("rect", ":first-child")
         .datum(d)
         .attr("rx", 7)
         .attr("ry", 7)
@@ -217,13 +219,13 @@ d3Cloud.update = function(el, state, callback) {
       this.draw(d, state, callback);
     })
     .start();
-
+    d3.selectAll("*").on('contextmenu', (d)=> console.log(d));
 };
 
 d3Cloud.draw = function(words, state, callback) {
   d3.selectAll("rect").remove();
 
-  var cloud = d3.select("g").selectAll("g text")
+  var cloud = d3.select("g").selectAll("#word-cloud g text")
     .data(words, (d) => {
       return d.text;
     });
@@ -240,17 +242,17 @@ d3Cloud.draw = function(words, state, callback) {
       return d.key;
     });
 
-    d3.selectAll("text")
+    d3.selectAll("#word-cloud text")
       .on("click", function(d, i) {
         d.clicked = !d.clicked;
-
         callback(d);
       })
       .on("mouseover", function(d, i) {
         if (!d.clicked) {
-          update_word_links(d3.selectAll("g text"), d, state.history, this, i);
+          update_word_links(d3.selectAll("#word-cloud g text"), d,
+                            state.history, this, i);
         }
-        console.log("mouseover", d);
+        // console.log("mouseover", d);
       })
       .on("mouseout", function(d, i) {
         remove_word_links(state.history);
@@ -276,7 +278,7 @@ d3Cloud.draw = function(words, state, callback) {
       post_process_background(d, i, state.history, this);
     });
 
-  d3.selectAll("g path").remove();
+  d3.selectAll("#word-cloud g path").remove();
 
   //Exiting words
   cloud.exit()
@@ -288,5 +290,6 @@ d3Cloud.draw = function(words, state, callback) {
     .style('fill-opacity', 1e-6)
     .attr('font-size', 1)
     .remove();
-
 };
+
+export default d3Cloud;
